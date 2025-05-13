@@ -1,4 +1,5 @@
 torch 
 requests 
 wandb
-PyYAML 
+PyYAML
+numpy 
