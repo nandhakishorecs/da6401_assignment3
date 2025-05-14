@@ -15,10 +15,10 @@ from network import *
 # Main training loop
 if __name__ == "__main__":
     # Configuration
-    base_path = 'dakshina_dataset_v1.0/hi/lexicons'  # Adjust base path
+    base_path = '/home/ee20d064/GAIL_Machine_Learning/Nandhakishore/RNN/data/dakshina_dataset_v1.0/hi/lexicons'  # Adjust base path
     language = 'hindi'  # Specify language explicitly, or set to None to infer from path
     train_file = f'{base_path}/hi.translit.sampled.train.tsv'
-    valid_file = f'{base_path}/hi.translit.sampled.valid.tsv'
+    valid_file = f'{base_path}/hi.translit.sampled.dev.tsv'
     test_file = f'{base_path}/hi.translit.sampled.test.tsv'
     embedding_dim = 256
     hidden_size = 512
