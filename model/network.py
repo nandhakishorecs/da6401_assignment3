@@ -26,7 +26,7 @@ class Encoder(nn.Module):
         )
     
     def forward(self, input_sequence): 
-        embeddings = self._embedding(input_sequence)
+        embeddings = self.embedding(input_sequence)
         if(self.cell_type == 'lstm'): 
             outputs, (hidden_state, cell_state) = self.rnn(embeddings)
             return hidden_state, cell_state
@@ -53,7 +53,7 @@ class Decoder(nn.Module):
         self.output = nn.Linear(hidden_cell_size, output_size)
     
     def forward(self, input_character, hidden, cell = None): 
-        embeddings = self.embedding(input_character.unsquueze(1))
+        embeddings = self.embedding(input_character.unsqueeze(1))
         if(self.cell_type == 'lstm'): 
             output_state, (hidden_state, cell_state) = self.rnn(embeddings, (hidden, cell))
             output_state = self.output(output_state.squeeze(1))
@@ -64,12 +64,12 @@ class Decoder(nn.Module):
             return output_state, hidden_state
 
 class Seq2Seq_Model(nn.Module): 
-    __slots__ = '_decoder', '_encoder', '_cell_type'
+    __slots__ = '_decoder', '_encoder', 'cell_type'
     def __init__(self, encoder: Encoder, decoder: Decoder):
         super(Seq2Seq_Model, self).__init__()
         self._encoder = encoder
         self._decoder = decoder
-        self._cell_type = encoder.cell_type
+        self.cell_type = encoder.cell_type
     
     def forward(self, source, target, teacher_forcing_ratio=0.5):
         batch_size = source.size(0)

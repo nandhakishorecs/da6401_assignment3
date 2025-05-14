@@ -2,7 +2,8 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'model')))
 
-from model.network import * 
+# from model.network import * 
+from network import * 
 
 import torch 
 import torch.nn as nn 
