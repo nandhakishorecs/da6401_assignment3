@@ -104,14 +104,14 @@ class Seq2Seq_Model(nn.Module):
             
         return outputs
     
-def create_seq2seq_model(input_vocab_size, output_vocab_size, embedding_dim, hidden_size, num_layers, cell_type):
+def create_seq2seq_model(input_vocab_size, output_vocab_size, embedding_dim, hidden_size, num_layers, cell_type, encoder_drop_out, decoder_drop_out):
     encoder = Encoder(
         input_size=input_vocab_size,
         embedding_dim=embedding_dim,
         hidden_cell_size=hidden_size,
         n_layers=num_layers,
         cell_type=cell_type, 
-        dropout=0
+        dropout=encoder_drop_out
     )
     decoder = Decoder(
         output_size=output_vocab_size,
@@ -119,7 +119,7 @@ def create_seq2seq_model(input_vocab_size, output_vocab_size, embedding_dim, hid
         hidden_cell_size=hidden_size,
         n_layers=num_layers,
         cell_type=cell_type,
-        dropout=0
+        dropout=decoder_drop_out
     )
     model = Seq2Seq_Model(encoder, decoder)
     return model
