@@ -204,6 +204,12 @@ class Seq2SeqModel(nn.Module):
             train_losses.append(train_loss)
             train_accuracies.append(train_acc)
             
+
+            if(val_loader is None and self.validation is True): 
+                raise NotImplementedError('Validation Flag True in model and no validation data passed for training')
+            elif(val_loader is not None and self.validation is False): 
+                raise NotImplementedError('Validation Flag False in model but validation data passed for training')
+
             # Validation
             if (self.validation and val_loader is not None):
                 self.eval()
