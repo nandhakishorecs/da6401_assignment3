@@ -22,7 +22,7 @@ if __name__ == "__main__":
     valid_file = f'{base_path}/hi.translit.sampled.dev.tsv'
     test_file = f'{base_path}/hi.translit.sampled.test.tsv'
     embedding_dim = 256
-    hidden_size = 512
+    hidden_dim = 512
     num_layers = 2
     cell_type = 'LSTM'
     batch_size = 64
@@ -39,55 +39,20 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
     
     # Initialize model
-    model = create_seq2seq_model(
+    model = Seq2SeqModel(
         input_vocab_size=len(train_dataset.latin_char2idx),
         output_vocab_size=len(train_dataset.native_char2idx),
         embedding_dim=embedding_dim,
-        hidden_size=hidden_size,
+        hidden_dim = hidden_dim,
         num_layers=num_layers,
-        cell_type=cell_type
+        cell_type=cell_type, 
+        optimizer_type = 'adam', 
+        learning_rate = 1e-3, 
+        n_epochs= 1, 
+        weight_decay = 1e-4, 
+        dropout = 0.2, 
+        validation = True, 
+        wandb_logging = False
     ).to(device)
     
-    # Loss and optimizer
-    criterion = nn.CrossEntropyLoss(ignore_index=train_dataset.native_char2idx['<PAD>'])
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    
-    # Training loop with tqdm
-    epoch_bar = tqdm(range(epochs), desc="Epochs", position=0)
-    for epoch in epoch_bar:
-        train_loss = train_epoch(model, train_loader, optimizer, criterion, device)
-        valid_loss, char_acc, word_acc = evaluate(model, valid_loader, criterion, device, valid_dataset)
-        
-        # Update progress bar description with metrics
-        epoch_bar.set_postfix({
-            'train_loss': f'{train_loss:.4f}',
-            'valid_loss': f'{valid_loss:.4f}',
-            'char_acc': f'{char_acc:.4f}',
-            'word_acc': f'{word_acc:.4f}'
-        })
-        
-        # Save model
-        # torch.save(model.state_dict(), f'seq2seq_epoch_{epoch + 1}.pth')
-    
-    # Final evaluation on test set
-    test_loss, test_char_acc, test_word_acc = evaluate(model, test_loader, criterion, device, test_dataset)
-    tqdm.write(f'Final Test Results: Test Loss: {test_loss:.4f}, Char Accuracy: {test_char_acc:.4f}, Word Accuracy: {test_word_acc:.4f}')
-
-
-
-
-
-# if __name__ == "__main__":
-#     # Example vocabulary sizes (adjust based on Latin and Devanagari character sets)
-#     latin_vocab_size = 256  # ASCII characters
-#     devanagari_vocab_size = 128  # Approximate Devanagari characters
-    
-#     model = create_seq2seq_model(
-#         input_vocab_size=latin_vocab_size,
-#         output_vocab_size=devanagari_vocab_size,
-#         embedding_dim=256,
-#         hidden_size=512,
-#         num_layers=2,
-#         cell_type='LSTM'
-#     )
-#     print(model)
+    model.fit(train_loader, valid_loader)

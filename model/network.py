@@ -19,7 +19,7 @@ map_optimiser ={
 class Seq2SeqModel(nn.Module):
     def __init__(
         self,
-        input_vocab_size: int, output_vocab_size: int, embedding_dim: int = 256, hidden_dim: int = 512, num_layers: int = 1, rnn_type: str = 'LSTM', 
+        input_vocab_size: int, output_vocab_size: int, embedding_dim: int = 256, hidden_dim: int = 512, num_layers: int = 1, cell_type: str = 'LSTM', 
         optimizer_type: str ='adam', learning_rate: float = 1e-3, n_epochs: int  = 1, weight_decay: float = 0.001, dropout: float = 0.5,
         validation: bool = True, wandb_logging: bool = False, 
         ) -> None:
@@ -43,7 +43,7 @@ class Seq2SeqModel(nn.Module):
         
         # Select RNN type
         # rnn_class = {'RNN': nn.RNN, 'LSTM': nn.LSTM, 'GRU': nn.GRU}[rnn_type]
-        rnn_class = map_cell_types[rnn_type.lower()]
+        rnn_class = map_cell_types[cell_type.lower()]
         
         # Encoder RNN
         self.encoder = rnn_class(
@@ -205,7 +205,7 @@ class Seq2SeqModel(nn.Module):
             train_accuracies.append(train_acc)
             
             # Validation
-            if (self._validation and val_loader is not None):
+            if (self.validation and val_loader is not None):
                 self.eval()
                 val_loss = 0.0
                 correct = 0
@@ -233,7 +233,7 @@ class Seq2SeqModel(nn.Module):
                 
 
             # tqdm update
-            if (self._validation and val_loader is not None):
+            if (self.validation and val_loader is not None):
                 # print(f'Epoch {epoch+1}/{self.epochs}, Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}')
                 progress_bar.set_postfix({
                     'Train Loss': f'\033[1;32m{train_loss:.2f}\033[0m',
@@ -254,8 +254,8 @@ class Seq2SeqModel(nn.Module):
                     "epoch": epoch + 1,
                     "train_loss": train_loss,
                     "train_accuracy": train_acc,
-                    "val_loss": val_loss if self._validation and val_loader is not None else None,
-                    "val_accuracy": val_acc if self._validation and val_loader is not None else None
+                    "val_loss": val_loss if self._alidation and val_loader is not None else None,
+                    "val_accuracy": val_acc if self.validation and val_loader is not None else None
                 })
     
     def predict(self, src, max_len: int = 50, device: str ='cuda'):
