@@ -19,9 +19,22 @@ map_optimiser ={
 class Seq2SeqModel(nn.Module):
     def __init__(
         self,
-        input_vocab_size: int, output_vocab_size: int, embedding_dim: int = 256, hidden_dim: int = 512, num_layers: int = 1, cell_type: str = 'LSTM', 
-        optimizer_type: str ='adam', learning_rate: float = 1e-3, n_epochs: int  = 1, weight_decay: float = 0.001, dropout: float = 0.5,
-        validation: bool = True, wandb_logging: bool = False, 
+        input_vocab_size: int, 
+        output_vocab_size: int, 
+        embedding_dim: int = 256, 
+        hidden_dim: int = 512, 
+        num_layers: int = 1, 
+        cell_type: str = 'lstm', 
+        encoder_bias: bool = True, 
+        decoder_bias: bool = True, 
+        optimizer_type: str ='adam', 
+        learning_rate: float = 1e-3, 
+        n_epochs: int  = 1, 
+        weight_decay: float = 0.001, 
+        encoder_dropout: float = 0.5, 
+        decoder_dropout: float = 0.5,
+        validation: bool = True, 
+        wandb_logging: bool = False
         ) -> None:
         
         super(Seq2SeqModel, self).__init__()
@@ -47,20 +60,22 @@ class Seq2SeqModel(nn.Module):
         
         # Encoder RNN
         self.encoder = rnn_class(
+            bias = encoder_bias,
             input_size=embedding_dim,
             hidden_size=hidden_dim,
             num_layers=num_layers,
             batch_first=True,
-            dropout=dropout if num_layers > 1 else 0
+            dropout=encoder_dropout if num_layers > 1 else 0
         )
         
         # Decoder RNN
         self.decoder = rnn_class(
+            bias = decoder_bias,
             input_size=embedding_dim,
             hidden_size=hidden_dim,
             num_layers=num_layers,
             batch_first=True,
-            dropout=dropout if num_layers > 1 else 0
+            dropout=decoder_dropout if num_layers > 1 else 0
         )
         
         # Output embedding layer for decoder
@@ -70,7 +85,7 @@ class Seq2SeqModel(nn.Module):
         self.fc = nn.Linear(hidden_dim, output_vocab_size)
         
         # Dropout layer
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(decoder_dropout)
         
         # Initialize weights
         self._init_weights()
@@ -260,7 +275,7 @@ class Seq2SeqModel(nn.Module):
                     "epoch": epoch + 1,
                     "train_loss": train_loss,
                     "train_accuracy": train_acc,
-                    "val_loss": val_loss if self._alidation and val_loader is not None else None,
+                    "val_loss": val_loss if self.validation and val_loader is not None else None,
                     "val_accuracy": val_acc if self.validation and val_loader is not None else None
                 })
     

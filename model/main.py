@@ -4,14 +4,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'd
 
 # from data.data_loader import * 
 from data_loader import * 
-
-from helper_functions import * 
+from network import *
 
 import torch 
-
 from tqdm import tqdm                   # type: ignore
-
-from network import * 
+ 
 
 # Main training loop
 if __name__ == "__main__":

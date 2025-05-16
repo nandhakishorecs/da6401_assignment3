@@ -8,13 +8,13 @@ parameters:
     values: [10, 20]
   learning_rate:
     distribution: log_uniform_values
-    min: 1e-5
-    max: 1e-3
+    min: 1e-4
+    max: 1e-1
   cell_types: 
     values: ['rnn', 'lstm', 'gru']
   n_layers:
     values: [1, 2, 3, 4] 
-  n_hidden_cells: 
+  hidden_dim: 
     values: [16, 32, 64]
   embedding_dim: 
     values: [16, 32, 64]
@@ -22,11 +22,19 @@ parameters:
     values: [64, 128, 256]
   optimiser:
     values: ['adam', 'sgd']
-  bias:
+  encoder_bias:
     values: [True, False]
-  # padding_type:
-  #   values: ['same', 'valid']
-  dropout_rate:
+  decoder_bias:
+    values: [True, False]
+  weight_decay:
+    distribution: log_uniform_values
+    min: 1e-5
+    max: 1e-3
+  encoder_dropout_rate:
+    distribution: uniform
+    min: 0.0
+    max: 0.9
+  decoder_dropout_rate:
     distribution: uniform
     min: 0.0
     max: 0.9
