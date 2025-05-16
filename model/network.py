@@ -33,6 +33,7 @@ class Seq2SeqModel(nn.Module):
         weight_decay: float = 0.001, 
         encoder_dropout: float = 0.5, 
         decoder_dropout: float = 0.5,
+        teacher_forcing: float = 0.3,  
         validation: bool = True, 
         wandb_logging: bool = False
         ) -> None:
@@ -50,7 +51,8 @@ class Seq2SeqModel(nn.Module):
         self.weight_decay = weight_decay
         self.validation = validation
         self.log = wandb_logging
-        
+        self.teacher_forcing = teacher_forcing 
+
         # Input embedding layer
         self.embedding = nn.Embedding(input_vocab_size, embedding_dim)
         
@@ -99,7 +101,7 @@ class Seq2SeqModel(nn.Module):
                 nn.init.xavier_uniform_(m.weight)
                 nn.init.zeros_(m.bias)
                 
-    def forward(self, src, target, teacher_forcing_ratio=0.5):
+    def forward(self, src, target):
         """
             Forward pass
             src: (batch_size, src_len) - input Latin sequences
@@ -140,7 +142,7 @@ class Seq2SeqModel(nn.Module):
             outputs[:, t] = output
             
             # Decide whether to use teacher forcing
-            teacher_force = torch.rand(1).item() < teacher_forcing_ratio
+            teacher_force = torch.rand(1).item() < self.teacher_forcing 
             
             # Get next input
             top1 = output.argmax(1)
@@ -239,7 +241,7 @@ class Seq2SeqModel(nn.Module):
                         trg = trg[:, 1:].reshape(-1)
                         running_val_loss += criterion(output, trg).item()
                         _, predictions = torch.max(output, 1)
-                        total += trg.size(0)
+                        val_total += trg.size(0)
                         val_correct += (predictions == trg).sum().item()
             
                 val_loss = running_val_loss/len(val_loader)

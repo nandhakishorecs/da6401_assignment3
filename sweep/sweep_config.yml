@@ -38,3 +38,5 @@ parameters:
     distribution: uniform
     min: 0.0
     max: 0.9
+  teacher_forcing: 
+    values: [0.0, 0.1. 0.5, 0.8]

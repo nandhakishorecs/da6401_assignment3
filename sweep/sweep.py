@@ -74,6 +74,7 @@ def do_sweep():
         decoder_bias = config.decoder_bias, 
         encoder_dropout = config.encoder_dropout_rate, 
         decoder_dropout = config.decoder_dropout_rate, 
+        teacher_forcing=config.teacher_forcing,
         validation = True, 
         wandb_logging = True
     ).to(device)
