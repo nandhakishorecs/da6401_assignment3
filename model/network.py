@@ -187,9 +187,9 @@ class Seq2SeqModel(nn.Module):
             self.train()
 
             # logging for training
-            running_loss = 0.0
-            correct = 0
-            total = 0
+            running_train_loss = 0.0
+            train_correct = 0
+            train_total = 0
             
             try: 
                 for src, trg in train_loader:
@@ -206,16 +206,16 @@ class Seq2SeqModel(nn.Module):
                     loss.backward()
                     optimizer.step()
 
-                    running_loss += loss.item() 
+                    running_train_loss += loss.item() 
                     _, predictions = torch.max(output, 1)
-                    total += trg.size(0)
-                    correct += (predictions == trg).sum().item()
+                    train_total += trg.size(0)
+                    train_correct += (predictions == trg).sum().item()
                 
             except Exception as error: 
                 print(f'\n{error}\n') 
             
-            train_loss = running_loss / len(train_loader)
-            train_acc = 100 * (correct/total)
+            train_loss = running_train_loss / len(train_loader)
+            train_acc = 100 * (train_correct/train_total)
             train_losses.append(train_loss)
             train_accuracies.append(train_acc)
             
@@ -228,22 +228,22 @@ class Seq2SeqModel(nn.Module):
             # Validation
             if (self.validation and val_loader is not None):
                 self.eval()
-                val_loss = 0.0
-                correct = 0
-                total = 0
+                running_val_loss = 0.0
+                val_correct = 0
+                val_total = 0
                 with torch.no_grad():
                     for src, trg in val_loader:
                         src, trg = src.to(device), trg.to(device)
                         output = self(src, trg, teacher_forcing_ratio=0)
                         output = output[:, 1:].reshape(-1, self.output_vocab_size)
                         trg = trg[:, 1:].reshape(-1)
-                        val_loss += criterion(output, trg).item()
+                        running_val_loss += criterion(output, trg).item()
                         _, predictions = torch.max(output, 1)
                         total += trg.size(0)
-                        correct += (predictions == trg).sum().item()
+                        val_correct += (predictions == trg).sum().item()
             
-                val_loss = val_loss/len(val_loader)
-                val_acc = 100*(correct/total)
+                val_loss = running_val_loss/len(val_loader)
+                val_acc = 100*(val_correct/val_total)
                 val_losses.append(val_loss)
                 val_accuracies.append(val_loss)
             else: 
