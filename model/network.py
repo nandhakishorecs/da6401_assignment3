@@ -133,7 +133,6 @@ class Seq2SeqModel(nn.Module):
             
         return outputs
     
-<<<<<<< HEAD
     def fit(self, train_loader, val_loader=None,  device='cuda'):
         """
         Train the model
@@ -301,24 +300,3 @@ class Seq2SeqModel(nn.Module):
             decoder_input = predicted.unsqueeze(1)
             
         return outputs
-=======
-def create_seq2seq_model(input_vocab_size, output_vocab_size, embedding_dim, hidden_size, num_layers, cell_type, encoder_drop_out, decoder_drop_out):
-    encoder = Encoder(
-        input_size=input_vocab_size,
-        embedding_dim=embedding_dim,
-        hidden_cell_size=hidden_size,
-        n_layers=num_layers,
-        cell_type=cell_type, 
-        dropout=encoder_drop_out
-    )
-    decoder = Decoder(
-        output_size=output_vocab_size,
-        embedding_dim=embedding_dim,
-        hidden_cell_size=hidden_size,
-        n_layers=num_layers,
-        cell_type=cell_type,
-        dropout=decoder_drop_out
-    )
-    model = Seq2Seq_Model(encoder, decoder)
-    return model
->>>>>>> 6cb8ebbb2182888411ef7d29e6a45296d70814bb
