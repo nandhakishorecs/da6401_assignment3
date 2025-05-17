@@ -1,5 +1,0 @@
-torch 
-requests 
-wandb
-PyYAML
-numpy 
