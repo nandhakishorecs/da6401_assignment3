@@ -2,3 +2,6 @@ tensorflow
 numpy 
 tqdm 
 PyYAML 
+wandb
+pandas
+Levenshtein
