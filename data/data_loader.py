@@ -98,12 +98,12 @@ class DataProcessor:
             self.target_char_enc[self.BLANK_CHAR] = len(self.target_char_dec)
             self.target_char_dec.append(self.BLANK_CHAR)
         
-        print("Number of training samples:", len(train_input))
-        print("Number of validation samples:", len(val_input))
-        print("Number of unique input tokens:", len(self.input_char_dec))
-        print("Number of unique output tokens:", len(self.target_char_dec))
-        print("Max sequence length for inputs:", self.max_encoder_seq_length)
-        print("Max sequence length for outputs:", self.max_decoder_seq_length)
+        # print("Number of training samples:", len(train_input))
+        # print("Number of validation samples:", len(val_input))
+        # print("Number of unique input tokens:", len(self.input_char_dec))
+        # print("Number of unique output tokens:", len(self.target_char_dec))
+        # print("Max sequence length for inputs:", self.max_encoder_seq_length)
+        # print("Max sequence length for outputs:", self.max_decoder_seq_length)
         
         return (
             self.input_char_enc, self.input_char_dec,

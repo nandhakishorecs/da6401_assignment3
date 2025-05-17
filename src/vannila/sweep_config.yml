@@ -1,0 +1,40 @@
+program: sweep.py
+method: bayes
+metric:
+  name: val_acc
+  goal: maximize
+parameters:
+  embed_dim: 
+    values: [128, 256, 512]
+  hidden_dim: 
+    values: [128, 256, 512]
+  learning_rate:
+    distribution: log_uniform_values
+    min: 1e-5
+    max: 1e-3
+  optimiser:
+    values: ['adam', 'sgd'] 
+  encoder_cell_type: 
+    values: ['rnn', 'lstm', 'gru']
+  decoder_cell_type: 
+    values: ['rnn', 'lstm', 'gru']
+  encoder_bias:
+    values: [True, False]
+  decoder_bias:
+    values: [True, False]
+  num_encoder_layers: 
+    values: [1, 2, 3, 4]
+  num_decoder_layers: 
+    values: [1, 2, 3, 4]
+  encoder_dropout_rate:
+    distribution: uniform
+    min: 0.0
+    max: 0.9
+  decoder_dropout_rate:
+    distribution: uniform
+    min: 0.0
+    max: 0.9
+  batch_size:
+    values: [32, 64, 128]
+  epochs:
+    values: [5, 10]

@@ -214,7 +214,20 @@ class Seq2SeqRNN:
             callbacks=callbacks
         )
         
+        # Explicitly log metrics per epoch
         if self.log and WANDB_AVAILABLE:
+            for epoch in range(self.epochs):
+                metrics = {
+                    'epoch': epoch + 1,
+                    'loss': history.history['loss'][epoch],
+                    'accuracy': history.history['accuracy'][epoch]
+                }
+                if validation_data is not None:
+                    metrics.update({
+                        'val_loss': history.history.get('val_loss', [0])[epoch],
+                        'val_accuracy': history.history.get('val_accuracy', [0])[epoch]
+                    })
+                wandb.log(metrics, step=epoch + 1)
             wandb.finish()
         
         return history
