@@ -1,9 +1,14 @@
 import tensorflow as tf
-from tensorflow.keras.optimizers import Adam, SGD  # type: ignore
-from tensorflow.keras.layers import Input, Embedding, Dense, SimpleRNN, LSTM, GRU # type: ignore
-from tensorflow.keras.models import Model # type: ignore
-import numpy as np
+from tensorflow.keras.optimizers import Adam, SGD
+from tensorflow.keras.layers import Input, Embedding, Dense, SimpleRNN, LSTM, GRU
+from tensorflow.keras.models import Model
 
+try:
+    import wandb
+    from wandb.keras import WandbCallback
+    WANDB_AVAILABLE = True
+except ImportError:
+    WANDB_AVAILABLE = False
 class Seq2SeqRNN:
     # A flexible RNN-based seq2seq model for character-level translation.
     
@@ -24,7 +29,8 @@ class Seq2SeqRNN:
         encoder_dropout_rate=0.1,
         decoder_dropout_rate=0.1, 
         batch_size=64, 
-        epochs=10
+        epochs=10,
+        log=False
     ):
         self.src_vocab_size = src_vocab_size
         self.tgt_vocab_size = tgt_vocab_size
@@ -42,14 +48,15 @@ class Seq2SeqRNN:
         self.epochs = epochs
         self.encoder_bias = encoder_bias
         self.decoder_bias = decoder_bias
+        self.log = log
         self.model = None
         self._validate_params()
     
     def _validate_params(self):
-        if self.encoder_cell_type not in ['rnn', 'lstm', 'gru'] and self.decoder_cell_type not in ['rnn', 'lstm', 'gru']: 
+        if self.encoder_cell_type not in ['rnn', 'lstm', 'gru'] or self.decoder_cell_type not in ['rnn', 'lstm', 'gru']: 
             raise ValueError("cell_type must be 'rnn', 'lstm', or 'gru'")
         if self.optimiser not in ['adam', 'sgd']: 
-            raise ValueError("optimiser must be 'adam', 'sgd'")
+            raise ValueError("optimiser must be 'adam' or 'sgd'")
         if self.src_vocab_size < 1 or self.tgt_vocab_size < 1:
             raise ValueError("Vocabulary sizes must be positive integers")
         if self.embed_dim < 1 or self.hidden_dim < 1:
@@ -57,7 +64,9 @@ class Seq2SeqRNN:
         if self.num_encoder_layers < 1 or self.num_decoder_layers < 1:
             raise ValueError("Number of layers must be at least 1")
         if self.learning_rate < 0: 
-            raise ValueError("learning rate must be postive ")
+            raise ValueError("learning rate must be positive")
+        if not isinstance(self.log, bool):
+            raise ValueError("log must be a boolean")
 
     def _get_rnn_cell(self, cell_type='encoder'):
         if cell_type == 'encoder':
@@ -130,10 +139,8 @@ class Seq2SeqRNN:
             )
             # Adjust initial_state based on decoder cell type
             if self.decoder_cell_type == 'lstm':
-                # LSTM expects [state_h, state_c]
                 initial_state = encoder_states if self.encoder_cell_type == 'lstm' else [encoder_states[0], encoder_states[0]]
             else:
-                # GRU or SimpleRNN expects single state
                 initial_state = encoder_states[0] if self.encoder_cell_type == 'lstm' else encoder_states
             
             decoder_outputs = decoder_layer(decoder_outputs, initial_state=initial_state)
@@ -172,13 +179,44 @@ class Seq2SeqRNN:
         if self.model is None:
             self.build_model()
         
+        callbacks = []
+        if self.log:
+            if not WANDB_AVAILABLE:
+                print("Warning: wandb is not installed. Logging to Weights & Biases will be disabled.")
+            else:
+                # Initialize W&B run
+                wandb.init(project="seq2seq_rnn", config={
+                    "src_vocab_size": self.src_vocab_size,
+                    "tgt_vocab_size": self.tgt_vocab_size,
+                    "embed_dim": self.embed_dim,
+                    "hidden_dim": self.hidden_dim,
+                    "learning_rate": self.learning_rate,
+                    "encoder_cell_type": self.encoder_cell_type,
+                    "decoder_cell_type": self.decoder_cell_type,
+                    "num_encoder_layers": self.num_encoder_layers,
+                    "num_decoder_layers": self.num_decoder_layers,
+                    "batch_size": self.batch_size,
+                    "epochs": self.epochs
+                })
+                callbacks.append(WandbCallback(
+                    monitor='val_loss',
+                    log_weights=False,
+                    log_gradients=False,
+                    save_model=False
+                ))
+        
         history = self.model.fit(
             [encoder_inputs, decoder_inputs],
             decoder_outputs,
             batch_size=self.batch_size,
             epochs=self.epochs,
-            validation_data=validation_data
+            validation_data=validation_data,
+            callbacks=callbacks
         )
+        
+        if self.log and WANDB_AVAILABLE:
+            wandb.finish()
+        
         return history
     
     def evaluate(self, encoder_inputs, decoder_inputs, decoder_outputs):

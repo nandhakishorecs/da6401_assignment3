@@ -2,6 +2,8 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data')))
 
+
+
 from data_loader import *
 from network import * 
 
@@ -9,8 +11,8 @@ if __name__ == '__main__':
     # Initialize DataProcessor
     processor = DataProcessor()
     
-    # Define file paths (update these to your local paths)
-    base_path = "/home/ee20d064/GAIL_Machine_Learning/Nandhakishore/RNN/v1/data"  # Update to your data directory
+    # Define file paths
+    base_path = "/home/ee20d064/GAIL_Machine_Learning/Nandhakishore/RNN/v1/data"
     train_data_path = f"{base_path}/dakshina_dataset_v1.0/hi/lexicons/hi.translit.sampled.train.tsv"
     val_data_path = f"{base_path}/dakshina_dataset_v1.0/hi/lexicons/hi.translit.sampled.dev.tsv"
     test_data_path = f"{base_path}/dakshina_dataset_v1.0/hi/lexicons/hi.translit.sampled.test.tsv"
@@ -52,7 +54,7 @@ if __name__ == '__main__':
     )
     print("Test data shapes:", test_encoder_input.shape, test_decoder_input.shape, test_decoder_target.shape)
     
-    # Initialize Seq2SeqRNN model
+    # Initialize Seq2SeqRNN model with logging enabled
     seq2seq = Seq2SeqRNN(
         src_vocab_size=len(input_char_dec),
         tgt_vocab_size=len(target_char_dec),
@@ -61,15 +63,16 @@ if __name__ == '__main__':
         learning_rate=1e-3, 
         optimiser='adam',
         encoder_cell_type='lstm',
-        decoder_cell_type='gru',
-        encoder_bias = True, 
-        decoder_bias = True, 
+        decoder_cell_type='lstm',  # Changed to lstm for consistency
+        encoder_bias=True, 
+        decoder_bias=True, 
         num_encoder_layers=2,
         num_decoder_layers=2,
         encoder_dropout_rate=0.1, 
         decoder_dropout_rate=0.1, 
         batch_size=64, 
-        epochs=2
+        epochs=2,
+        log=True
     )
     
     # Train the model
