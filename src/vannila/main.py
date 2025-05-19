@@ -56,22 +56,23 @@ if __name__ == '__main__':
     
     # Initialize Seq2SeqRNN model with logging enabled
     seq2seq = Seq2SeqRNN(
+        # using best model choosen from sweeps 
         src_vocab_size=len(input_char_dec),
         tgt_vocab_size=len(target_char_dec),
-        embed_dim=256,
-        hidden_dim=256,
-        learning_rate=1e-3, 
+        embed_dim=512,
+        hidden_dim=512,
+        learning_rate=0.00012180528531698948,
         optimiser='adam',
         encoder_cell_type='lstm',
-        decoder_cell_type='lstm',  # Changed to lstm for consistency
-        encoder_bias=True, 
-        decoder_bias=True, 
+        decoder_cell_type='rnn',
+        encoder_bias=True,
+        decoder_bias=False,
         num_encoder_layers=2,
-        num_decoder_layers=2,
-        encoder_dropout_rate=0.1, 
-        decoder_dropout_rate=0.1, 
-        batch_size=64, 
-        epochs=2,
+        num_decoder_layers=3,
+        encoder_dropout_rate=0.11029084967332052,
+        decoder_dropout_rate=0.28297487009133887,
+        batch_size=64,
+        epochs=1,
         log=True
     )
     
@@ -83,10 +84,17 @@ if __name__ == '__main__':
         decoder_outputs=train_decoder_target,
         validation_data=([val_encoder_input, val_decoder_input], val_decoder_target)
     )
+
+    # Save model weights
+    # model_save_path = os.getcwd()
+    # os.makedirs(model_save_path, exist_ok=True)
+    # weights_path = os.path.join(model_save_path, "best_vannila_seq2seq_model.h5")
+    # seq2seq.save_weights(weights_path)
+    # print(f"Saved model weights to {weights_path}")
     
     # Evaluate on test data
     print("Evaluating on test data...")
-    test_accuracy = seq2seq.evaluate(
+    _, test_accuracy = seq2seq.evaluate(
         encoder_inputs=test_encoder_input,
         decoder_inputs=test_decoder_input,
         decoder_outputs=test_decoder_target

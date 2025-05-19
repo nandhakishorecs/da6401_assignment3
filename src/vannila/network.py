@@ -1,3 +1,4 @@
+import os
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam, SGD
 from tensorflow.keras.layers import Input, Embedding, Dense, SimpleRNN, LSTM, GRU
@@ -175,7 +176,7 @@ class Seq2SeqRNN:
         
         return self.model
     
-    def train(self, encoder_inputs, decoder_inputs, decoder_outputs, validation_data=None):
+    def train(self, encoder_inputs, decoder_inputs, decoder_outputs, validation_data=None, save_model = False, save_model_path = None):
         if self.model is None:
             self.build_model()
         
@@ -230,6 +231,13 @@ class Seq2SeqRNN:
                 wandb.log(metrics, step=epoch + 1)
             wandb.finish()
         
+        if save_model and save_model_path is not None:
+            # Save model weights
+            os.makedirs(save_model_path, exist_ok=True)
+            weights_path = os.path.join(save_model_path, "best_vannila_seq2seq_model.h5")
+            self.model.save_weights(weights_path)
+            print(f"Saved model weights to {weights_path}")
+        
         return history
     
     def evaluate(self, encoder_inputs, decoder_inputs, decoder_outputs):
@@ -240,7 +248,9 @@ class Seq2SeqRNN:
             decoder_outputs,
             verbose=1
         )
-        return metrics[1]  # Return accuracy
+        predictions = self.model.predict([encoder_inputs, decoder_inputs])
+        
+        return predictions, metrics[1]  # Return accuracy
     
     def summary(self):
         if self.model is None:

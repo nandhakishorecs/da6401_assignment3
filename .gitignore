@@ -7,3 +7,4 @@
 wandb
 data/google_dakshina_dataset_v1.0.tar
 data/dakshina_dataset_v1.0
+src/vannila/best_vannila_seq2seq_model.h5
