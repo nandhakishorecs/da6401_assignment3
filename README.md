@@ -7,6 +7,8 @@ This repository contains all the code for Assignment 3 for the Introduction to D
 
 This Assignment has three directories (denoted by src, predictions_vannila, predictions_attention) - refer the src/ for code and the remaining for outputs. 
 
+## Wandb Report: 
+Wand Report: https://wandb.ai/da6401_assignments/da6401_assignment3_vannila_v1/reports/DA6401-Assignment-3--VmlldzoxMjg0NTkyMQ
 
 ## Instructions for run the code: 
 
@@ -38,4 +40,31 @@ $ wandb login
 ```python
 $ python3 data/download_data.py
 ```
- 
+7. The code files named main.py in src/vannilla and src/attention support argparse <br>
+
+Commands to run: 
+```consolde
+python3 main.py -ed 512 -hd 512 -eb True -db False -bs 16 -ne 1 -nd 3 -et rnn -dt lstm -lr 0.001 -o adam -e 1 -log True  -ddo 0.2 -edo 0.3
+```
+Lookup Table: 
+
+| Flag Name              | Default Value        | Description                                           |
+|------------------------|----------------------|-------------------------------------------------------|
+| -ed, --embed_dim           | 128                | Number of embedding dimensions, chose from [128, 256, 512]                        |
+| -hd, --hidden_dim      | 128                    | Number of hidden dimensions, chose from [128, 256, 512]                          |
+| -eb, --encoder_bias     | True                    | Enable bias in encoder                      |
+| -db, --decoder_bias     | True                    | Enable bias in decoder                      |
+| -bs, --batch_size     | 16                    | Data Batch size                      |
+|-ne, --n_encoder_layer     | 1                    | number of layers in encoder, choose from [1, 2, 3, 4]                      |
+|-nd, --n_decoder_layer     | 1                    | number of layers in decoder, choose from [1, 2, 3,4]                      |
+|-et, --encoder_type     | rnn                    | cell type, choose from ['rnn', 'lstm', 'gru']                      |
+|-dt, --decoder_type     | rnn                    | cell type, choose from ['rnn', 'lstm', 'gru']                      |
+|-ddo, --decoder_dropout     | 0.1                    | Decoder dropout                      |
+|-edo, --encoder_dropout     | 0.1                    | Encoder dropout                      |
+| -lr, --learning_rate   | 0.001                | Learning Rate for the model                           |
+| -o, --optimiser        | 'adam'               | Optimiser to minimise the model's loss                |
+| -log, --log            | True                 | Use wandb logging                                     |
+| -wp, --wandb_project   | 'da6401_assignment2' | Wandb project name                                    |
+| -we, --wandb_entity    | 'trail1'             | Wandb entity name                                     |
+| -att, --use_attention    | True             | use attention for training                                     |
+| -na, --n_attention_layer    | 1             | number of  attention layers for training, choose from [1, 2, 3 ,4]                                     |

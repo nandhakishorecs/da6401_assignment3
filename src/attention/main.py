@@ -1,13 +1,49 @@
 import sys 
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data')))
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  #
 
-
+import argparse
 from data_loader import *
 from network import * 
 
+def get_args():
+    parser = argparse.ArgumentParser(description = '\033[92m' + '\nTrain a CNN based model with iNaturalist dataset\n' + '\033[0m')
+    
+    # model architecture 
+    parser.add_argument('-ed', '--embed_dim', type = int, default = 128, choices = [128, 256, 512], help = 'Embedding Dimensions')
+    parser.add_argument('-hd', '--hidden_simension', type = int, default = 128, choices=[128, 256, 512], help = 'Hidden Dimensions')
+    
+    # layer parameters 
+    parser.add_argument('-eb', '--encoder_bias', type = bool, default = True, help = 'Bias for encoder layer(s)')
+    parser.add_argument('-db', '--decoder_bias', type = bool, default = True, help = 'Bias for decoder layer(s)')
+    parser.add_argument('-bs', '--batch_size', type = int, default = 16, choices = [16, 32, 64], help = 'Batch size')
+    parser.add_argument('-ne', '--n_encoder_layer', type = int, default = 1, choices = [1, 2, 3, 4], help = 'Number of layers in Encoder')
+    parser.add_argument('-nd', '--n_decoder_layer', type = int, default = 1, choices = [1, 2, 3, 4], help = 'Number of layers in Decoder')
+    parser.add_argument('-et', '--encoder_type', type = str, default = 'rnn', choices = ['lstm', 'rnn', 'gru'], help = 'Encoder cell type')
+    parser.add_argument('-dt', '--decoder_type', type = str, default = 'rnn', choices = ['lstm', 'rnn', 'gru'], help = 'Decoder cell type')
+    parser.add_argument('-edo', '--encoder_dropout', type = float, default = 0.1, help = 'Encoder dropout')
+    parser.add_argument('-ddo', '--decoder_dropout', type = float, default = 0.1, help = 'Decoder dropout')
+
+    # optimiser parameters
+    parser.add_argument('-lr', '--learning_rate', type = float, default = 1e-4, help = 'Learning rate')
+    parser.add_argument('-o', '--optimiser', type = str, default = 'adam', choices=['sgd', 'adam'], help = 'Optimiser')
+    parser.add_argument('-e', '--epochs', type = int, default = 1, help = 'Number of epochs')
+    
+
+    # Attention parameters 
+    parser.add_argument('-att', '--use_attention', type = bool, default = True, help = 'use attention')
+    parser.add_argument('-natt', '--num_attention_layers', type = int, default = 1, choices = [1, 2, 3, 4], help = 'Number of attention layers ')
+
+    # wandb configuration
+    parser.add_argument('-log', '--log', type = bool, default = False, help = 'Use wandb')
+    parser.add_argument('-wp', '--wandb_project', type = str, default = 'da6401_assignment2', help = 'Use wandb')
+    parser.add_argument('-we', '--wand_entity', type = str, default = 'trial1', help = 'Use wandb')
+
+    return parser.parse_args()
+
 if __name__ == '__main__':
+    args = get_args()
+
     # Initialize DataProcessor
     processor = DataProcessor()
     
@@ -56,25 +92,27 @@ if __name__ == '__main__':
     
     # Initialize Seq2SeqRNN model with logging enabled
     seq2seq = Seq2SeqRNN(
+        # using best model choosen from sweeps 
         src_vocab_size=len(input_char_dec),
         tgt_vocab_size=len(target_char_dec),
-        embed_dim=128,
-        hidden_dim=512,
-        learning_rate=0.0003757444021189912, 
-        optimiser='adam',
-        encoder_cell_type='lstm',
-        decoder_cell_type='rnn',  # Changed to lstm for consistency
-        encoder_bias=True, 
-        decoder_bias=False, 
-        num_encoder_layers=1,
-        num_decoder_layers=3,
-        encoder_dropout_rate=0.4847177227086345, 
-        decoder_dropout_rate=0.2977326987635475, 
-        batch_size=64, 
-        epochs=1,
-        log=True, 
-        use_attention=True, 
-        num_attention_layers=2
+        embed_dim=args.embed_dim,
+        hidden_dim=args.hidden_dim,
+        learning_rate=args.learning_rate,
+        optimiser=args.optimiser,
+        encoder_cell_type=args.encoder_type,
+        decoder_cell_type=args.decoder_type,
+        encoder_bias=args.encoder_bias,
+        decoder_bias=args.decoder_bias,
+        num_encoder_layers=args.n_encoder_layer,
+        num_decoder_layers=args.n_decoder_layer,
+        encoder_dropout_rate=args.encoder_dropout,
+        decoder_dropout_rate=args.decoder_dropout,
+        batch_size=args.batch_size,
+        epochs=args.epochs,
+        log=args.log,
+        use_attention=args.use_attention,  # New flag for attention
+        num_attention_layers=args.num_attention_layers  # New parameter for number of attention layers
+
     )
     
     # Train the model
@@ -85,6 +123,13 @@ if __name__ == '__main__':
         decoder_outputs=train_decoder_target,
         validation_data=([val_encoder_input, val_decoder_input], val_decoder_target)
     )
+
+    # Save model weights
+    # model_save_path = os.getcwd()
+    # os.makedirs(model_save_path, exist_ok=True)
+    # weights_path = os.path.join(model_save_path, "best_vannila_seq2seq_model.h5")
+    # seq2seq.save_weights(weights_path)
+    # print(f"Saved model weights to {weights_path}")
     
     # Evaluate on test data
     print("Evaluating on test data...")

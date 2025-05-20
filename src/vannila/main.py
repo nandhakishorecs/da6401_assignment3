@@ -2,10 +2,43 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'data')))
 
+import argparse
 from data_loader import *
 from network import * 
 
+def get_args():
+    parser = argparse.ArgumentParser(description = '\033[92m' + '\nTrain a CNN based model with iNaturalist dataset\n' + '\033[0m')
+    
+    # model architecture 
+    parser.add_argument('-ed', '--embed_dim', type = int, default = 128, choices = [128, 256, 512], help = 'Embedding Dimensions')
+    parser.add_argument('-hd', '--hidden_simension', type = int, default = 128, choices=[128, 256, 512], help = 'Hidden Dimensions')
+    
+    # layer parameters 
+    parser.add_argument('-eb', '--encoder_bias', type = bool, default = True, help = 'Bias for encoder layer(s)')
+    parser.add_argument('-db', '--decoder_bias', type = bool, default = True, help = 'Bias for decoder layer(s)')
+    parser.add_argument('-bs', '--batch_size', type = int, default = 16, choices = [16, 32, 64], help = 'Batch size')
+    parser.add_argument('-ne', '--n_encoder_layer', type = int, default = 1, choices = [1, 2, 3, 4], help = 'Number of layers in Encoder')
+    parser.add_argument('-nd', '--n_decoder_layer', type = int, default = 1, choices = [1, 2, 3, 4], help = 'Number of layers in Decoder')
+    parser.add_argument('-et', '--encoder_type', type = str, default = 'rnn', choices = ['lstm', 'rnn', 'gru'], help = 'Encoder cell type')
+    parser.add_argument('-dt', '--decoder_type', type = str, default = 'rnn', choices = ['lstm', 'rnn', 'gru'], help = 'Decoder cell type')
+    parser.add_argument('-edo', '--encoder_dropout', type = float, default = 0.1, help = 'Encoder dropout')
+    parser.add_argument('-ddo', '--decoder_dropout', type = float, default = 0.1, help = 'Decoder dropout')
+
+    # optimiser parameters
+    parser.add_argument('-lr', '--learning_rate', type = float, default = 1e-4, help = 'Learning rate')
+    parser.add_argument('-o', '--optimiser', type = str, default = 'adam', choices=['sgd', 'adam'], help = 'Optimiser')
+    parser.add_argument('-e', '--epochs', type = int, default = 1, help = 'Number of epochs')
+    
+    # wandb configuration
+    parser.add_argument('-log', '--log', type = bool, default = False, help = 'Use wandb')
+    parser.add_argument('-wp', '--wandb_project', type = str, default = 'da6401_assignment2', help = 'Use wandb')
+    parser.add_argument('-we', '--wand_entity', type = str, default = 'trial1', help = 'Use wandb')
+
+    return parser.parse_args()
+
 if __name__ == '__main__':
+    args = get_args()
+
     # Initialize DataProcessor
     processor = DataProcessor()
     
@@ -57,21 +90,21 @@ if __name__ == '__main__':
         # using best model choosen from sweeps 
         src_vocab_size=len(input_char_dec),
         tgt_vocab_size=len(target_char_dec),
-        embed_dim=512,
-        hidden_dim=512,
-        learning_rate=0.00012180528531698948,
-        optimiser='adam',
-        encoder_cell_type='lstm',
-        decoder_cell_type='rnn',
-        encoder_bias=True,
-        decoder_bias=False,
-        num_encoder_layers=2,
-        num_decoder_layers=3,
-        encoder_dropout_rate=0.11029084967332052,
-        decoder_dropout_rate=0.28297487009133887,
-        batch_size=64,
-        epochs=1,
-        log=True
+        embed_dim=args.embed_dim,
+        hidden_dim=args.hidden_dim,
+        learning_rate=args.learning_rate,
+        optimiser=args.optimiser,
+        encoder_cell_type=args.encoder_type,
+        decoder_cell_type=args.decoder_type,
+        encoder_bias=args.encoder_bias,
+        decoder_bias=args.decoder_bias,
+        num_encoder_layers=args.n_encoder_layer,
+        num_decoder_layers=args.n_decoder_layer,
+        encoder_dropout_rate=args.encoder_dropout,
+        decoder_dropout_rate=args.decoder_dropout,
+        batch_size=args.batch_size,
+        epochs=args.epochs,
+        log=args.log
     )
     
     # Train the model

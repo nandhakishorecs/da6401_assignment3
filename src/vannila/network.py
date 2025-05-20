@@ -256,3 +256,83 @@ class Seq2SeqRNN:
         if self.model is None:
             self.build_model()
         self.model.summary()
+
+    # Override build_model in Seq2SeqRNN for visualization
+    def build_model_for_visualization(self):
+        encoder_rnn_cell = self._get_rnn_cell(cell_type='encoder')
+        decoder_rnn_cell = self._get_rnn_cell(cell_type='decoder')
+        
+        # Encoder
+        encoder_inputs = Input(shape=(None,), name='encoder_inputs')
+        encoder_embedding = Embedding(
+            self.src_vocab_size, 
+            self.embed_dim, 
+            mask_zero=True, 
+            name='encoder_embedding'
+        )(encoder_inputs)
+        
+        encoder_outputs = encoder_embedding
+        encoder_states = []
+        for i in range(self.num_encoder_layers):
+            # Set return_sequences=True for all layers for visualization
+            encoder_layer = encoder_rnn_cell(
+                self.hidden_dim,
+                return_sequences=True,  # Changed for visualization
+                return_state=True,
+                dropout=self.encoder_dropout_rate,
+                use_bias=self.encoder_bias,
+                name=f'encoder_{self.encoder_cell_type}_{i+1}'
+            )
+            encoder_outputs = encoder_layer(encoder_outputs)
+            
+            if self.encoder_cell_type == 'lstm':
+                encoder_outputs, state_h, state_c = encoder_outputs
+                encoder_states = [state_h, state_c]
+            else:
+                encoder_outputs, state_h = encoder_outputs
+                encoder_states = [state_h]
+        
+        # Decoder (unchanged)
+        decoder_inputs = Input(shape=(None,), name='decoder_inputs')
+        decoder_embedding = Embedding(
+            self.tgt_vocab_size, 
+            self.embed_dim, 
+            mask_zero=True, 
+            name='decoder_embedding'
+        )(decoder_inputs)
+        
+        decoder_outputs = decoder_embedding
+        for i in range(self.num_decoder_layers):
+            decoder_layer = decoder_rnn_cell(
+                self.hidden_dim,
+                return_sequences=True,
+                return_state=True,
+                dropout=self.decoder_dropout_rate,
+                use_bias=self.decoder_bias,
+                name=f'decoder_{self.decoder_cell_type}_{i+1}'
+            )
+            initial_state = encoder_states if self.decoder_cell_type == 'lstm' else encoder_states[0]
+            decoder_outputs = decoder_layer(decoder_outputs, initial_state=initial_state)
+            
+            if self.decoder_cell_type == 'lstm':
+                decoder_outputs, state_h, state_c = decoder_outputs
+                encoder_states = [state_h, state_c]
+            else:
+                decoder_outputs, state_h = decoder_outputs
+                encoder_states = [state_h]
+        
+        decoder_dense = Dense(self.tgt_vocab_size, activation='softmax', name='decoder_output')
+        decoder_outputs = decoder_dense(decoder_outputs)
+        
+        # Define model
+        vis_model = Model([encoder_inputs, decoder_inputs], decoder_outputs)
+        
+        # Load trained weights
+        if self.model is not None:
+            vis_model.set_weights(self.model.get_weights())
+        
+        # Compile model
+        optimizer = Adam(self.learning_rate) if self.optimiser == 'adam' else SGD(self.learning_rate)
+        vis_model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+        
+        return vis_model
