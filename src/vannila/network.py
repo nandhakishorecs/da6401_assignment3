@@ -1,8 +1,8 @@
 import os
 import tensorflow as tf
-from tensorflow.keras.optimizers import Adam, SGD
-from tensorflow.keras.layers import Input, Embedding, Dense, SimpleRNN, LSTM, GRU
-from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam, SGD # type: ignore
+from tensorflow.keras.layers import Input, Embedding, Dense, SimpleRNN, LSTM, GRU # type: ignore
+from tensorflow.keras.models import Model # type: ignore
 
 try:
     import wandb

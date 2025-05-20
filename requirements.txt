@@ -4,4 +4,5 @@ tqdm
 PyYAML 
 wandb
 pandas
-Levenshtein
+seaborn
+tabulate
