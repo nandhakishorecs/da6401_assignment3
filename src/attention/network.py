@@ -4,6 +4,10 @@ from tensorflow.keras.optimizers import Adam, SGD
 from tensorflow.keras.layers import Input, Embedding, Dense, SimpleRNN, LSTM, GRU, Attention
 from tensorflow.keras.models import Model
 
+import numpy as np 
+import matplotlib.pyplot as plt 
+import seaborn as sns 
+
 try:
     import wandb
     from wandb.keras import WandbCallback
@@ -94,107 +98,6 @@ class Seq2SeqRNN:
             elif self.decoder_cell_type == 'gru':
                 return GRU
     
-    # def build_model(self):
-    #     encoder_rnn_cell = self._get_rnn_cell(cell_type='encoder')
-    #     decoder_rnn_cell = self._get_rnn_cell(cell_type='decoder')
-        
-    #     # Encoder
-    #     encoder_inputs = Input(shape=(None,), name='encoder_inputs')
-    #     encoder_embedding = Embedding(
-    #         self.src_vocab_size, 
-    #         self.embed_dim, 
-    #         mask_zero=True, 
-    #         name='encoder_embedding'
-    #     )(encoder_inputs)
-        
-    #     encoder_outputs = encoder_embedding
-    #     encoder_states = []
-    #     all_encoder_outputs = []  # Store outputs for attention
-    #     for i in range(self.num_encoder_layers):
-    #         return_sequences = True  # Always return sequences for attention
-    #         encoder_layer = encoder_rnn_cell(
-    #             self.hidden_dim,
-    #             return_sequences=return_sequences,
-    #             return_state=True,
-    #             dropout=self.encoder_dropout_rate,
-    #             use_bias=self.encoder_bias,
-    #             name=f'encoder_{self.encoder_cell_type}_{i+1}'
-    #         )
-    #         encoder_outputs = encoder_layer(encoder_outputs)
-    #         all_encoder_outputs.append(encoder_outputs[0] if self.encoder_cell_type == 'lstm' else encoder_outputs)
-            
-    #         if self.encoder_cell_type == 'lstm':
-    #             encoder_outputs, state_h, state_c = encoder_outputs
-    #             encoder_states = [state_h, state_c]
-    #         else:
-    #             encoder_outputs, state_h = encoder_outputs
-    #             encoder_states = [state_h]
-        
-    #     # Decoder
-    #     decoder_inputs = Input(shape=(None,), name='decoder_inputs')
-    #     decoder_embedding = Embedding(
-    #         self.tgt_vocab_size, 
-    #         self.embed_dim, 
-    #         mask_zero=True, 
-    #         name='decoder_embedding'
-    #     )(decoder_inputs)
-        
-    #     decoder_outputs = decoder_embedding
-    #     for i in range(self.num_decoder_layers):
-    #         decoder_layer = decoder_rnn_cell(
-    #             self.hidden_dim,
-    #             return_sequences=True,
-    #             return_state=True,
-    #             dropout=self.decoder_dropout_rate,
-    #             use_bias=self.decoder_bias,
-    #             name=f'decoder_{self.decoder_cell_type}_{i+1}'
-    #         )
-    #         # Adjust initial_state based on decoder cell type
-    #         if self.decoder_cell_type == 'lstm':
-    #             initial_state = encoder_states if self.encoder_cell_type == 'lstm' else [encoder_states[0], encoder_states[0]]
-    #         else:
-    #             initial_state = encoder_states[0] if self.encoder_cell_type == 'lstm' else encoder_states
-            
-    #         decoder_outputs = decoder_layer(decoder_outputs, initial_state=initial_state)
-            
-    #         if self.decoder_cell_type == 'lstm':
-    #             decoder_outputs, state_h, state_c = decoder_outputs
-    #             encoder_states = [state_h, state_c]
-    #         else:
-    #             decoder_outputs, state_h = decoder_outputs
-    #             encoder_states = [state_h]
-            
-    #         # Apply attention layers if enabled
-    #         if self.use_attention and i < self.num_attention_layers:
-    #             # Use the last encoder layer's outputs for attention
-    #             attention_layer = Attention(name=f'attention_layer_{i+1}')
-    #             # Query: decoder outputs; Value/Key: encoder outputs
-    #             attention_output = attention_layer([decoder_outputs, all_encoder_outputs[-1]])
-    #             # Concatenate attention output with decoder outputs
-    #             decoder_outputs = tf.keras.layers.Concatenate(name=f'concat_attention_{i+1}')([decoder_outputs, attention_output])
-        
-    #     decoder_dense = Dense(self.tgt_vocab_size, activation='softmax', name='decoder_output')
-    #     decoder_outputs = decoder_dense(decoder_outputs)
-        
-    #     # Define model
-    #     self.model = Model([encoder_inputs, decoder_inputs], decoder_outputs)
-        
-    #     # Optimiser
-    #     if self.optimiser == 'adam': 
-    #         optimizer = Adam(self.learning_rate)
-    #     elif self.optimiser == 'sgd': 
-    #         optimizer = SGD(self.learning_rate)
-    #     else:
-    #         raise ValueError("optimiser must be 'adam' or 'sgd'")
-
-    #     # Compile model with categorical_crossentropy for one-hot targets
-    #     self.model.compile(
-    #         optimizer=optimizer,
-    #         loss='categorical_crossentropy',
-    #         metrics=['accuracy']
-    #     )
-        
-    #     return self.model
     def build_model(self):
         encoder_rnn_cell = self._get_rnn_cell(cell_type='encoder')
         decoder_rnn_cell = self._get_rnn_cell(cell_type='decoder')
@@ -382,3 +285,57 @@ class Seq2SeqRNN:
         if self.model is None:
             self.build_model()
         self.model.summary()
+
+    # for Attention based model 
+    def _generate_attention_heatmaps(self, encoder_inputs_test, decoder_inputs_test, num_samples=10):
+        if not self.use_attention:
+            raise ValueError("Attention heatmaps can only be generated when use_attention=True")
+        if self.model is None :
+            self.build_model()
+        if not WANDB_AVAILABLE:
+            print("Warning: wandb is not installed. Cannot log heatmaps to Weights & Biases.")
+            return
+        
+        # Initialize W&B run
+        wandb.init(project="seq2seq_rnn_heatmaps")
+        
+        # Get attention weights for the first num_samples
+        attention_weights = self.model.predict([encoder_inputs_test[:num_samples], decoder_inputs_test[:num_samples]])
+        
+        # If multiple attention layers, select the first one for simplicity
+        if isinstance(attention_weights, list):
+            attention_weights = attention_weights[0]  # Use first attention layer's weights
+        
+        # Create a 2x5 grid of heatmaps
+        fig, axes = plt.subplots(2, 5, figsize=(40, 10))  # Adjusted for 10 samples
+        axes = axes.flatten()
+        
+        for i in range(min(num_samples, 10)):
+            # Attention weights shape: (batch_size, decoder_timesteps, encoder_timesteps)
+            weights = attention_weights[i]  # Shape: (decoder_timesteps, encoder_timesteps)
+            
+            # Create heatmap
+            sns.heatmap(
+                weights,
+                ax=axes[i],
+                cmap='viridis',
+                cbar=True,
+                square=True
+            )
+            axes[i].set_title(f'Input {i+1} Attention Heatmap')
+            axes[i].set_xlabel('Encoder Timesteps (Source)')
+            axes[i].set_ylabel('Decoder Timesteps (Target)')
+        
+        plt.tight_layout()
+        plt.savefig('test_data_attention_heatmap.png')
+        
+        # Log the heatmap grid to W&B
+        wandb.log({"attention_heatmaps": wandb.Image(fig)})
+        
+        # Close the plot to free memory
+        plt.close(fig)
+        
+        # Finish W&B run
+        wandb.finish()
+        
+        print("Attention heatmaps for 10 test inputs logged to Weights & Biases.")

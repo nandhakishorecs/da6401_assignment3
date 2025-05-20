@@ -95,6 +95,16 @@ if __name__ == '__main__':
     )
     
     print(f"Test Accuracy: {test_accuracy:.4f}")
+    print("Generating attention heatmaps...")
+    save_path = '/home/ee20d064/GAIL_Machine_Learning/Nandhakishore/RNN/v1/predictions_attention'
+    seq2seq.generate_attention_heatmaps(
+        encoder_inputs_test=test_encoder_input,
+        decoder_inputs_test=test_decoder_input,
+        input_char_dec=input_char_dec,
+        target_char_dec=target_char_dec,
+        num_samples=5,
+        save_path=save_path
+    )
     
     # Print model summary
-    seq2seq.summary()
+    # seq2seq.summary()
